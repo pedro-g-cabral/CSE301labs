@@ -14,6 +14,8 @@
 
 --- Programming exercises
 
+import Data.Maybe
+
 -- Exercise 0a
 doubleList :: [a] -> [a]
 doubleList [] = []
@@ -176,14 +178,63 @@ counterexample = [2,3,1]
 data Bin = L | B Bin Bin  deriving (Show,Eq)
 
 -- Exercise 5b (optional)
+{-
+
+Desired behavior:
+
+If we have a binary tree (B left right), we wish to output the permutation:
+
+(fromBin left) ++ [size (B left right)] ++ [size left + x | x <- (fromBin right)]
+
+
+-}
 fromBin :: Bin -> [Int]
-fromBin L = [1]
-fromBin (B left right) = (fromBin left) ++ 
+fromBin L = []
+fromBin (B left right) = (fromBin left) ++ [sizeTree] ++ [sizeL + x | x <- (fromBin right)]
+                        where
+                              (sizeL, _, sizeTree) = getSizes (B left right)
 
-fromBinAux :: Bin -> (Int, [Int])
-fromBinAux L = (1, [1])
-fromBinAux (B left right) = (1 + nLeft + nRight)
+-- Returns sizes of left, right, tree
+getSizes :: Bin -> (Int, Int, Int)
+getSizes L = (0, 0, 0)
+getSizes (B left right) = (sizeL, sizeR, 1+sizeL+sizeR)
+                        where
+                              (_, _, sizeL) = getSizes left
+                              (_, _, sizeR) = getSizes right
 
+{-
+Desired behavior:
+
+First finds n (the maximum number of the list). Make n the root of the tree.
+
+What comes before n in the list, will be used to generate the left subtree. The
+same is done for the right subtree.
+
+-}
 toBin :: [Int] -> Maybe Bin
-toBin = undefined
+toBin [] = Just L
+toBin xs = toBinAux (length xs) xs
 
+-- (length, list) -> Binary tree
+toBinAux :: Int -> [Int] -> Maybe Bin
+toBinAux 0 [] = Just L
+toBinAux 1 [1] = Just (B L L)
+toBinAux n xs = case searchResult of
+                        Nothing -> Nothing
+                        (Just p) -> makeMaybeBin (toBinAux p leftList) (toBinAux (n-p-1) rightList)
+                              where
+                                    leftList = take p xs
+                                    rightList = [x-p | x <- drop (p+1) xs]
+                  where
+                        searchResult = findInList 0 n xs
+
+makeMaybeBin :: Maybe Bin -> Maybe Bin -> Maybe Bin
+makeMaybeBin Nothing _ = Nothing
+makeMaybeBin _ Nothing = Nothing
+makeMaybeBin (Just left) (Just right) = Just (B left right)
+
+findInList :: Eq a => Int -> a -> [a] -> Maybe Int
+findInList _ _ [] = Nothing
+findInList n x0 (x:xs) = if x0 == x
+                              then (Just n)
+                              else findInList (n+1) x0 xs
