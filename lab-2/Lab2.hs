@@ -2,8 +2,34 @@
 
 -- Exercise 3.1
 {-
-   (This is an example of a multi-line comment, delimited by
-   curly braces.)
+
+(1) We know that 
+      [] ++ xs == xs 
+by definition.
+
+(2) We prove by structural induction that
+      xs ++ [] == xs
+
+First, we know by (1) that
+      [] ++ [] == []
+Next, assume that (2) holds for a list xs. We prove that it holds for x:xs.
+      x:xs ++ [] == x:(xs++[]) -- (by definition)
+      x:(xs++[]) == x:(xs) -- (by induction hyptothesis)
+Therefore (2) also holds for x:xs. We are done by structural induction.
+
+(3) We also prove by structural induction that
+      xs++(ys++zs) == (xs++ys)++zs
+for all lists xs, ys, zs. We prove it by structural induction on xs. First,
+      []++(ys++zs) == ys++zs -- (by (1))
+      ([]++ys)++zs == (ys)++zs == ys ++ zs (also by (1))
+Now assume that the property holds for the list xs. We prove that it holds
+for the list x:xs. We have:
+      (x:xs)++(ys++zs) == x:(xs++(ys++zs)) -- (by definition of ++)
+      == x:((xs++ys)++zs) -- (by induction hypthesis)
+      == (x:(xs++ys))++zs -- (by definition of ++)
+      ==((x:xs)++ys) ++ zs -- (by definition of ++)
+The proof is complete by structural induction.
+
 -}
 
 -- Exercise 3.2 (optional)
