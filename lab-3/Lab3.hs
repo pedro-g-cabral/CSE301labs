@@ -48,8 +48,14 @@ my_isPrefixOf s1 s2 = if (length s1) > (length s2)
                         else foldr (\(x1,x2) b -> (x1 == x2) && b) True (zip s1 s2)
 
 -- Exercise 2e (optional)
+{- Idea: Count the number of initial elements that satisfy the condition
+ - and drop them.
+ -}
 my_dropWhile :: (a -> Bool) -> [a] -> [a]
-my_dropWhile = undefined
+my_dropWhile f xs = drop n xs 
+                    where
+                      n = foldr (\x m -> if (f x) then (m+1) else 0) 0 xs
+
 
 {- my_takeWhile f xs = foldr (\u us -> if f u then u:us else []) [] xs -}
 
@@ -106,7 +112,11 @@ acc (Plus e1 e2)  w k = (acc e1 w k) || (acc e2 w k)
 acc (Times e1 e2) w k = acc e1 w (\suffix_w -> acc e2 suffix_w k)
 
 -- Exercise 4b (optional)
-acc (Star e)      w k = (acc One w k) || (acc e w k) || (acc (Times e Star e) w k)
-                          
+acc (Star e)      w k = (acc One w k) || (acc e w k) || (acc e w (\suffix_w -> (not (null suffix_w)) && (not ((length suffix_w) == (length w))) && (acc (Star e) suffix_w k)))
 
+{-Idea:
 
+if acc One w k => True
+if any (acc e w[:i] k) && (acc (Star e) w[i:] k) (from large i to small i) => True
+  
+-}
