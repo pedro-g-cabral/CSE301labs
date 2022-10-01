@@ -22,7 +22,7 @@ isEven = \n.n not true
 
 -- Exercise 1b
 {- 
-exp = \m.\n.m (mult n) 1
+exp = \m.\n.n (mult m) one
 -}
 
 -- Encodings of pairing and projections
@@ -34,17 +34,18 @@ snd = \p.p (\x.\y.y)
 
 -- Exercise 1c
 {-
-swap = \p.\x.\y.\f.f (snd p) (fst.p)
+swap = \p.\f.f (snd p) (fst p)
 -}
 
 -- Exercise 1d
 {-
-swapIf = \b.\p.\x.\y.\f.b (p) (swap p)
--}
+swapIf \b.\p.b (swap p) p
+-} 
 
 -- Exercise 1e (optional)
 {-
-fib = <your definition here>
+fib_pair = \p.\(pair (snd p) (add (fst p) (snd p)))
+fib = \n.fst (n fib_pair (pair zero one))
 -}
 
 -- Exercise 1e (optional)
@@ -127,10 +128,18 @@ check :: TyCxt -> Expr -> Ty -> Bool
 synth :: TyCxt -> Expr -> Maybe Ty
 
 -- Exercise 3
-check gamma (V x) A = ((x, A) `elem` gamma)
-check gamma (L x e) (Fn A B) = check ((x,A):gamma) e B
+check gamma (Ann e a) b = if (a==b) then True else False
+check gamma (V x) a = ((x, a) `elem` gamma)
+check gamma (L x e) (Fn a b) = check ((x,a):gamma) e b
+check gamma e b = case t of
+                    Nothing -> False
+                    (Just a) -> (a == b)
+                   where t = synth gamma e
 
 
+synth gamma (Ann e a) = (Just a)
+synth gamma (V x) = foldr (\(x1, a1) r -> if x1==x then (Just a1) else r) Nothing gamma
 synth gamma (A e1 e2) = case t of
-                            Just (Fn A B) -> if (check gamma e2 A) then B else Nothing
-
+                            Just (Fn a b) -> if (check gamma e2 a) then (Just b) else Nothing
+                            otherwise -> Nothing
+                         where t = synth gamma e1
