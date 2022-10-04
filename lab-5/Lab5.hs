@@ -229,7 +229,12 @@ coin = do{
   
 -- Exercise 3b
 subset :: SelectMonad m => [a] -> m [a]
-subset xs = foldr (\x l -> do{c <- coin; if c then return ((return [x]) ++ l) else return l}) [] xs
+subset [] = return []
+subset (x:xs) = do{
+  c <- coin;
+  res <- subset xs;
+  if c then return x++res else return res
+}
 
 -- Exercise 3c
 simulate :: Monad m => Int -> m Bool -> m Int
