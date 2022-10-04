@@ -1,5 +1,6 @@
-import Control.Monad.State
-import Control.Monad.Fail
+-- Used the "hiding (fail)" because I was getting ambiguous occurrence errors
+import Control.Monad.State 
+import Control.Monad.Fail hiding (fail)
 import System.Random
 import Data.List
 
@@ -233,12 +234,17 @@ subset [] = return []
 subset (x:xs) = do{
   c <- coin;
   res <- subset xs;
-  if c then return x++res else return res
+  if c then return (x:res) else return res
 }
 
 -- Exercise 3c
 simulate :: Monad m => Int -> m Bool -> m Int
-simulate = undefined
+simulate 0 experiment = return 0
+simulate n experiment = do{
+  c <- experiment;
+  res <- simulate (n-1) experiment;
+  if c then return (1+res) else return res
+}
 
 -- Exercise 3d (optional)
 genTree :: SelectMonad m => [a] -> m (Bin a)
