@@ -1,4 +1,4 @@
-module Parser (runParser, parseLExp, parseCmd) where
+module Parser (runParser, parseLExp, parseCmd, parseCustom, readParser) where
 
 import Expr
 import Cmd
@@ -223,3 +223,6 @@ readParser :: MonadFail m => Parser a -> String -> m a
 readParser p s = case runParser p s of
                    Just (x,s') -> if null s' then return x else fail "readParser: input left"
                    Nothing -> fail "readParser: failed to parse"
+
+-- Custom Parser (For testing)
+parseCustom = parseQuit <|> parseNoop
