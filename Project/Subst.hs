@@ -37,3 +37,4 @@ test4 = subst (V "x", "y") (L "y" (V "y")) == L "y" (V "y")
 test5 = subst (L "a" (V "a") , "x") (A (L "y" (V "x")) (V "y")) == A (L "y" (L "a" (V "a"))) (V "y")
 -- case 3. the substitution is different from the bound variable, and the bound variable is free in the substitution. Then we substitute and rename.
 test6 = subst (A (L "a" (V "y")) (V "a"), "x") (A (L "y" (V "x")) (V "y")) == A (L "b" (A (L "a" (V "y")) (V "a"))) (V "y")
+
