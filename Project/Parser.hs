@@ -1,37 +1,38 @@
 module Parser (runParser, parseLExp, parseCmd, parseCustom, readParser) where
 
-import Expr
 import Cmd
-
-import Data.Maybe
-import Data.Char
-
 import Control.Applicative
+import Data.Char
+import Data.Maybe
+import Expr
 
 -- We begin by defining the type of parsers for a type:
-newtype Parser a = Parser { runParser :: String -> Maybe (a,String) }
+newtype Parser a = Parser {runParser :: String -> Maybe (a, String)}
 
 -- The idea is that a value of type Parser a is something that takes a
 -- string as input, and tries to parse a prefix of the input as a value
 -- of type a.  If it succeeds, it returns Just a value of type (a,String),
 -- and otherwise it returns Nothing.
 
--- Or in other words, adapting a poem by Graham Hutton, 
+-- Or in other words, adapting a poem by Graham Hutton,
 
-  -- A parser for things
-  -- Is a function from strings
-  -- To maybe a pair
-  -- Of a thing and a string!
+-- A parser for things
+-- Is a function from strings
+-- To maybe a pair
+-- Of a thing and a string!
 
 -- We can define a Monad instance for Parser
 instance Monad Parser where
   -- return :: a -> Parser a
-  return x = Parser (\s -> Just (x,s))
+  return x = Parser (\s -> Just (x, s))
 
   -- (>>=) :: Parser a -> (a -> Parser b) -> Parser b
-  p >>= f  = Parser (\s -> case runParser p s of
-                             Nothing -> Nothing
-                             Just (x,s') -> runParser (f x) s')
+  p >>= f =
+    Parser
+      ( \s -> case runParser p s of
+          Nothing -> Nothing
+          Just (x, s') -> runParser (f x) s'
+      )
 
 -- We add some boilerplate code to derive Functor and Applicative
 -- instances from the Monad instance
@@ -53,9 +54,12 @@ instance Alternative Parser where
   empty = Parser (\s -> Nothing)
 
   -- (<|>) :: Parser a -> Parser a -> Parser a
-  p1 <|> p2 = Parser (\s -> case runParser p1 s of
-                                 Just (x,s') -> Just (x,s')
-                                 Nothing -> runParser p2 s)
+  p1 <|> p2 =
+    Parser
+      ( \s -> case runParser p1 s of
+          Just (x, s') -> Just (x, s')
+          Nothing -> runParser p2 s
+      )
 
 -- The idea is that "empty" is a parser that always fails, while
 -- p1 <|> p2 is a parser that first tries to parse a string using p1,
@@ -69,12 +73,12 @@ instance Alternative Parser where
 -- Note there must be at least one character of input for item to succeed.
 item :: Parser Char
 item = Parser $ \s -> case s of
-                        []     -> Nothing
-                        (x:s') -> Just (x,s')
+  [] -> Nothing
+  (x : s') -> Just (x, s')
 
 -- dually, the "end" parser detects when we have reached the end of input.
 end :: Parser ()
-end = Parser $ \s -> if null s then Just ((),"") else Nothing
+end = Parser $ \s -> if null s then Just ((), "") else Nothing
 
 -- sat p parses a character satisfying the predicate p
 sat :: (Char -> Bool) -> Parser Char
@@ -84,7 +88,7 @@ sat p = do
 
 -- parse a specific character
 char :: Char -> Parser Char
-char c = sat (==c)
+char c = sat (== c)
 
 -- parse a letter of the alphabet
 letter :: Parser Char
@@ -100,8 +104,8 @@ space = sat isSpace
 
 -- parse a specific string of characters
 string :: String -> Parser String
-string []     = return []
-string (c:cs) = char c >> string cs >> return (c:cs)
+string [] = return []
+string (c : cs) = char c >> string cs >> return (c : cs)
 
 -- the paren parser combinator turns a parser of something into a
 -- parser of something wrapped in parentheses
@@ -122,14 +126,14 @@ list p = listne p <|> pure []
 listne p = do
   x <- p
   xs <- list p
-  return (x:xs)
+  return (x : xs)
 
 -- separatedBy p q is similar, parsing a non-empty list of p's separated by q's
 separatedBy :: Parser a -> Parser b -> Parser [a]
 separatedBy p q = do
   x <- p
   xs <- list (q >> p)
-  return (x:xs)
+  return (x : xs)
 
 -- spaces parses some spaces
 spaces :: Parser [Char]
@@ -146,7 +150,7 @@ var :: Parser Var
 var = do
   base <- letter
   rest <- list (alphanum <|> char '\'')
-  return (base:rest)
+  return (base : rest)
 
 -- The expression parser is defined in mutual recursion with parsers
 -- for the various kinds of subexpressions.  To implement the standard
@@ -161,18 +165,18 @@ parseLExp = parseLam <|> parseApps
 -- Parse a lambda abstraction expression.
 parseLam :: Parser LExp
 parseLam = do
-  char '\\' <|> char 'λ'        -- parse backslash or unicode λ for the lambda symbol
-  x <- var                      -- parse a variable name
-  char '.'                      -- parse a dot
-  t <- parseLExp                -- parse an expression
-  return (L x t)                -- return the lambda abstraction
+  char '\\' <|> char 'λ' -- parse backslash or unicode λ for the lambda symbol
+  x <- var -- parse a variable name
+  char '.' -- parse a dot
+  t <- parseLExp -- parse an expression
+  return (L x t) -- return the lambda abstraction
 
 -- Parse a left-nested sequence of applications.
 parseApps :: Parser LExp
 parseApps = do
-  ts <- separatedBy (parseVar <|> paren parseLExp) spaces     -- parse a list of variables or parenthesized expressions,
-                                                              --   separated by spaces.
-  return (foldl A (head ts) (tail ts))                        -- return a left-nested sequence of application
+  ts <- separatedBy (parseVar <|> paren parseLExp) spaces -- parse a list of variables or parenthesized expressions,
+  --   separated by spaces.
+  return (foldl A (head ts) (tail ts)) -- return a left-nested sequence of application
 
 -- Parse a variable expression
 parseVar :: Parser LExp
@@ -189,22 +193,22 @@ parseCmd = parseEval <|> parseLet <|> parseNoop <|> parseQuit
 -- Parse an eval command.
 parseEval :: Parser Cmd
 parseEval = do
-  t <- parseLExp                -- parse an expression
-  end                           -- reached end of input
-  return (Eval t)               -- return an eval command
+  t <- parseLExp -- parse an expression
+  end -- reached end of input
+  return (Eval t) -- return an eval command
 
 -- Parse a let command
 parseLet :: Parser Cmd
 parseLet = do
-  (string "let" >> space >> return ()) <|> return ()    -- allow the optional string "let" at the beginning
+  (string "let" >> space >> return ()) <|> return () -- allow the optional string "let" at the beginning
   spaces
-  x <- var                                              -- parse a variable name
+  x <- var -- parse a variable name
   spaces
-  char '='                                              -- equality sign
+  char '=' -- equality sign
   spaces
-  t <- parseLExp                                        -- parse an expression
-  end                                                   -- reached end of input
-  return (Let x t)                                      -- return a let command
+  t <- parseLExp -- parse an expression
+  end -- reached end of input
+  return (Let x t) -- return a let command
 
 -- Parse a no-op command
 parseNoop :: Parser Cmd
@@ -221,6 +225,10 @@ parseQuit = do
 
 readParser :: MonadFail m => Parser a -> String -> m a
 readParser p s = case runParser p s of
+
+Just (x, s') -> if null s' then return x else fail "readParser: input left"
+  Nothing -> fail "readParser: failed to parse"
+=======
                    Just (x,s') -> if null s' then return x else fail "readParser: input left"
                    Nothing -> fail "readParser: failed to parse"
 
