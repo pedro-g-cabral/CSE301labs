@@ -66,11 +66,6 @@ filter_redex (_ : xs) = filter_redex xs
 redex :: LExp -> [LExpPtr]
 redex = filter_redex . subexp
 
-beta_reduce :: Var -> LExp -> LExp -> LExp
-beta_reduce w e (V v) = if w == v then e else V v
-beta_reduce w e (L x ep) = L x (beta_reduce w e ep)
-beta_reduce w e (A e1 e2) = A (beta_reduce w e e1) (beta_reduce w e e2)
-
 stepBeta :: LExp -> LExp
 stepBeta e =
   let beta_redices = redex e
@@ -78,7 +73,7 @@ stepBeta e =
         then e
         else
           let (c, A (L v e1) e2) = head beta_redices
-           in plug c (beta_reduce v e2 e1)
+           in plug c (subst (e2, v) e1)
 
 normalize :: LExp -> LExp
 normalize e =
